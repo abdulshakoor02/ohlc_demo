@@ -2,19 +2,20 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
 	"time"
 
 	"github.com/abdulshakoor02/ohlc_exinity/config"
 	"github.com/abdulshakoor02/ohlc_exinity/database/dbAdapter"
 	"github.com/abdulshakoor02/ohlc_exinity/database/migration"
-	"github.com/abdulshakoor02/ohlc_exinity/models/ohlc"
+	"github.com/abdulshakoor02/ohlc_exinity/database/operation"
+	"github.com/abdulshakoor02/ohlc_exinity/logger"
+	"github.com/abdulshakoor02/ohlc_exinity/models/ohlcRecord"
 	"github.com/abdulshakoor02/ohlc_exinity/models/trade"
 	"github.com/gorilla/websocket"
 )
 
 func main() {
+	log := logger.Logger
 	config.LoadEnv()
 	dbAdapter.DbConnect()
 	migration.MigrateDb()
@@ -23,10 +24,10 @@ func main() {
 
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		log.Fatal("Error connecting to WebSocket:", err)
+		log.Fatal().Err(err).Msgf("failed to load env")
 	}
 	defer conn.Close()
-	var currentOHLC *ohlc.Ohlc
+	var currentOHLC *ohlcRecord.OhlcRecord
 	var currentMinute time.Time
 
 	for {
@@ -36,20 +37,18 @@ func main() {
 			log.Println("Error reading message:", err)
 			return
 		}
-		fmt.Printf("Received message: %s\n", message)
 		if err := json.Unmarshal(message, &trade); err != nil {
 			log.Println("Error unmarshaling JSON:", err)
 			continue
 		}
 		tradeTime := time.Unix(0, trade.EventTime*int64(time.Millisecond))
 		minuteStart := tradeTime.Truncate(time.Minute)
-		fmt.Println(tradeTime, tradeTime.Truncate(time.Minute))
 
 		if currentOHLC == nil || minuteStart != currentMinute {
 			if currentOHLC != nil {
-				fmt.Printf("OHLC: %+v\n", *currentOHLC)
+				go operation.Create[ohlcRecord.OhlcRecord](currentOHLC)
 			}
-			currentOHLC = &ohlc.Ohlc{
+			currentOHLC = &ohlcRecord.OhlcRecord{
 				TradingPair: trade.TradingPair,
 				OpenTime:    minuteStart,
 				CloseTime:   minuteStart.Add(time.Minute - time.Nanosecond),
@@ -69,11 +68,11 @@ func main() {
 			}
 		}
 
-		finalVal, err := json.Marshal(currentOHLC)
-		if err != nil {
-			fmt.Println("Error:", err)
-		}
-
-		fmt.Printf("Received message: %s\n", finalVal)
+		// finalVal, err := json.Marshal(currentOHLC)
+		// if err != nil {
+		// 	fmt.Println("Error:", err)
+		// }
+		//
+		// fmt.Printf("Received message: %s\n", finalVal)
 	}
 }

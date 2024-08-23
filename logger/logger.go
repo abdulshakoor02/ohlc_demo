@@ -12,7 +12,7 @@ var Logger zerolog.Logger
 func init() {
 	contentWriter := zerolog.ConsoleWriter{Out: os.Stdout}
 	file, err := os.OpenFile(
-		"erp_backend.log",
+		"ohlc_demo.log",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0664,
 	)
