@@ -1,9 +1,7 @@
 package main
 
 import (
-	"log"
 	"net"
-	"sync"
 
 	"github.com/abdulshakoor02/ohlc_exinity/config"
 	"github.com/abdulshakoor02/ohlc_exinity/database/dbAdapter"
@@ -11,52 +9,9 @@ import (
 	"github.com/abdulshakoor02/ohlc_exinity/logger"
 	pb "github.com/abdulshakoor02/ohlc_exinity/ohlc"
 	"github.com/abdulshakoor02/ohlc_exinity/service/aggregateData"
+	"github.com/abdulshakoor02/ohlc_exinity/service/grpcServer"
 	"google.golang.org/grpc"
 )
-
-type server struct {
-	pb.UnimplementedOHLCServiceServer
-	ohlcChannel     chan *pb.OHLC
-	clients         map[string]chan *pb.OHLC
-	clientsMu       sync.Mutex
-	currentOHLC     *pb.OHLC
-	currentOHLCLock sync.RWMutex
-}
-
-func (s *server) processOhlcData() {
-	for ohlc := range s.ohlcChannel {
-		s.currentOHLCLock.Lock()
-		s.currentOHLC = ohlc
-		s.currentOHLCLock.Unlock()
-
-		s.broadcastToClients(ohlc)
-	}
-}
-
-func (s *server) broadcastToClients(ohlc *pb.OHLC) {
-	s.clientsMu.Lock()
-	defer s.clientsMu.Unlock()
-
-	for _, ch := range s.clients {
-		select {
-		case ch <- ohlc:
-		default:
-			log.Println("Dropped OHLC data due to slow consumer")
-		}
-	}
-}
-
-func (s *server) StreamOHLCData(
-	req *pb.OHLCrequest,
-	stream pb.OHLCService_StreamOHLCDataServer,
-) error {
-	for ohlc := range s.ohlcChannel {
-		if err := stream.Send(ohlc); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 func main() {
 	log := logger.Logger
@@ -64,8 +19,8 @@ func main() {
 	dbAdapter.DbConnect()
 	migration.MigrateDb()
 
-	ohlcServer := &server{
-		ohlcChannel: make(chan *pb.OHLC),
+	ohlcServer := &grpcServer.Server{
+		OhlcChannel: make(chan *pb.OHLC),
 	}
 
 	lis, err := net.Listen("tcp", ":50051")
@@ -77,11 +32,8 @@ func main() {
 	s := grpc.NewServer()
 
 	pb.RegisterOHLCServiceServer(s, ohlcServer)
-	go aggregateData.AggregateData(true, ohlcServer.ohlcChannel)
-	// go aggregateData.AggregateData("ethusdt", true, ohlcServer.ohlcChannel)
-	go ohlcServer.processOhlcData()
-	// go aggregateData.AggregateData("pepeusdt", true)
-	// aggregateData.AggregateData("btcusdt", true)
+	go aggregateData.AggregateData(true, ohlcServer.OhlcChannel)
+	go ohlcServer.ProcessOhlcData()
 
 	err = s.Serve(lis)
 	if err != nil {
