@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package ohlc;
+
+option go_package = "github.com/abdulshakoor02/ohlc_exinity/ohlc";
+
+message OHLC {
+    string trade_pair = 1;
+    string open_time = 2;
+    string close_time = 3;
+    double open = 4;
+    double high = 5;
+    double low = 6;
+    double close = 7;
+}
+
+message OHLCrequest {
+  string trade_pair = 1;
+}
+
+service OHLCService {
+    rpc StreamOHLCData(OHLCrequest) returns (stream OHLC);
+}
+
+message Empty {}
