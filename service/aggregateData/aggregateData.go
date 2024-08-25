@@ -12,10 +12,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// func AggregateData(tradePair string, insertCandle bool, ohlcChannel chan<- *pb.OHLC) {
 func AggregateData(insertCandle bool, ohlcChannel chan<- *pb.OHLC) {
 	url := "wss://stream.binance.com:9443/stream?streams=btcusdt@aggTrade/ethusdt@aggTrade/pepeusdt@aggTrade"
-	// url := fmt.Sprintf("wss://stream.binance.com:9443/ws/%v@aggTrade", tradePair)
 	log := logger.Logger
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {

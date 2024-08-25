@@ -57,14 +57,6 @@ func (s *Server) StreamOHLCData(
 	s.AddClient(clientID, clientChannel)
 	defer s.RemoveClient(clientID)
 
-	// s.CurrentOHLCLock.RLock()
-	// if s.CurrentOHLC != nil {
-	// 	if err := stream.Send(s.CurrentOHLC); err != nil {
-	// 		log.Println("Error sending initial OHLC data:", err)
-	// 	}
-	// }
-	// s.CurrentOHLCLock.RUnlock()
-
 	for {
 		select {
 		case ohlc, ok := <-clientChannel:
