@@ -21,6 +21,7 @@ func main() {
 
 	ohlcServer := &grpcServer.Server{
 		OhlcChannel: make(chan *pb.OHLC),
+		Clients:     make(map[string]chan *pb.OHLC),
 	}
 
 	lis, err := net.Listen("tcp", ":50051")
@@ -40,33 +41,4 @@ func main() {
 		log.Fatal().Err(err).Msgf("failed to start grpc server")
 	}
 
-	log.Info().Msg("grpc server started")
-
-	// conn, err := grpc.NewClient(":50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msgf("failed to start grpc server")
-	// }
-	// defer conn.Close()
-	//
-	// client := pb.NewOHLCServiceClient(conn)
-	// stream, err := client.StreamOHLCData(context.Background(), &pb.Empty{})
-	// if err != nil {
-	// 	log.Fatal().Err(err).Msgf("failed to start grpc server")
-	// }
-	//
-	// for {
-	// 	ohlc, err := stream.Recv()
-	// 	if err != nil {
-	// 		log.Fatal().Err(err).Msgf("failed to start grpc server")
-	// 	}
-	// 	log.Printf(
-	// 		"Received OHLC: OpenTime: %s, CloseTime: %s, Open: %.2f, High: %.2f, Low: %.2f, Close: %.2f, Volume: %.4f",
-	// 		ohlc.OpenTime,
-	// 		ohlc.CloseTime,
-	// 		ohlc.Open,
-	// 		ohlc.High,
-	// 		ohlc.Low,
-	// 		ohlc.Close,
-	// 	)
-	// }
 }

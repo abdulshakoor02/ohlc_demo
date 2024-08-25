@@ -76,6 +76,8 @@ func AggregateData(insertCandle bool, ohlcChannel chan<- *pb.OHLC) {
 			Close:     currentOHLC[trade.Data.TradingPair].Close,
 		}
 		ohlcChannel <- ohlc
+		// log.Println(ohlc)
+		// time.Sleep(time.Second * 4)
 
 		// finalVal, err := json.Marshal(currentOHLC[trade.Data.TradingPair])
 		// if err != nil {
