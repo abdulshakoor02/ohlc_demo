@@ -1,0 +1,21 @@
+services:
+  ohlc_demo:
+    build:
+      context: ./
+    image: ohlc_demo
+    restart: always
+    container_name: ohlc_demo
+    env_file: .env
+    ports:
+      - "$PORT:$PORT"
+    networks:
+      - ohlc_demo
+    volumes:
+      - ./:/app/:delegated
+    command:
+      - make
+      - run
+
+networks:
+  ohlc_demo:
+    driver: bridge

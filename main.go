@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/abdulshakoor02/ohlc_exinity/config"
@@ -23,8 +24,8 @@ func main() {
 		OhlcChannel: make(chan *pb.OHLC),
 		Clients:     make(map[string]chan *pb.OHLC),
 	}
-
-	lis, err := net.Listen("tcp", ":50051")
+	port := fmt.Sprintf(":%v", config.PORT)
+	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatal().Err(err).Msgf("failed to start the server")
 	}

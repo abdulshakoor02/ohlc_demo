@@ -12,6 +12,7 @@ var DB_NAME string
 var POSTGRES_USER string
 var POSTGRES_PASSWORD string
 var POSTGRES_PORT string
+var PORT string
 
 func LoadEnv() {
 	log := logger.Logger
@@ -24,4 +25,5 @@ func LoadEnv() {
 	POSTGRES_USER = os.Getenv("POSTGRES_USER")
 	POSTGRES_PASSWORD = os.Getenv("POSTGRES_PASSWORD")
 	POSTGRES_PORT = os.Getenv("POSTGRES_PORT")
+	PORT = os.Getenv("PORT")
 }
